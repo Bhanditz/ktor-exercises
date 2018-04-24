@@ -1,4 +1,5 @@
 import io.ktor.application.*
+import io.ktor.auth.*
 import io.ktor.html.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -45,6 +46,15 @@ fun Routing.loginRoute() {
     get("/login") {
         call.respondHtml {
             body {
+                val message = call.parameters["message"] ?: ""
+                if (message.isNotEmpty()) {
+                    div {
+                        +message
+                    }
+                }
+                p {
+                    +"Note: Use the same user and password for login in this demo"
+                }
                 form(action = "/login", encType = FormEncType.applicationXWwwFormUrlEncoded, method = FormMethod.post) {
                     div {
                         +"Username:"
@@ -62,7 +72,7 @@ fun Routing.loginRoute() {
         }
     }
 
-    post("/login") {
+    post("/login2") {
         val post = call.receiveOrNull() ?: Parameters.Empty
         val username = post["username"]
         val password = post["password"]
@@ -80,23 +90,28 @@ fun Routing.loginRoute() {
         }
     }
 
-    // Version using authentication feature
-    /*
-    route("/login", HttpMethod.Post) {
-        authentication {
-            formAuthentication("username", "password", FormAuthChallenge.Redirect { call, credentials -> "/login" }) { credentials ->
+    // Version using the Authentication feature
+    application.install(Authentication, {
+        form("equal-auth") {
+            userParamName = "username"
+            passwordParamName = "password"
+            challenge = FormAuthChallenge.Redirect { credentials -> "/login?message=Invalid%20credentials" }
+            validate { credentials ->
                 if (credentials.name == credentials.password) {
                     UserIdPrincipal(credentials.name)
                 } else {
                     null
                 }
             }
+
         }
-        post {
+    })
+
+    authenticate("equal-auth") {
+        post("/login") {
             val principal = call.authentication.principal<UserIdPrincipal>()
             call.sessions.set(MySession(principal!!.name))
             call.respondRedirect("/")
         }
     }
-    */
 }
