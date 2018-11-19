@@ -1,3 +1,7 @@
+:warning:
+This repository is not updated to the latest ktor release. See https://github.com/ktorio/ktor-samples instead.
+
+
 # Ktor Exercises
 
 ## Exercises
